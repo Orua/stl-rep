@@ -11,6 +11,6 @@ window.OPENBW_VIDEO_EXPORT_CONFIG = Object.freeze({
     "video/webm;codecs=vp8",
     "video/webm"
   ],
-  modalTitle: "Exporting video",
-  modalMessage: "Recording replay to WebM from the opening frame at maximum replay speed."
+  modalTitle: "正在导出视频",
+  modalMessage: "从录像起点以最高速度录制 WebM 视频。"
 });

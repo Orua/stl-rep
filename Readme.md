@@ -1,32 +1,36 @@
-# StarCraft Replay Viewer
+# STL 星际争霸录像查看器
 
-Browser and standalone desktop viewer for StarCraft: Brood War 1.16.1 and
-Remastered replays, built on [OpenBW](https://github.com/OpenBW/openbw).
+STL 是中国玩家组织的公益性《星际争霸》业余联赛，已积累二十多年的比赛录像。本项目为 STL 录像库提供中文回放工具，让玩家在浏览器里打开经典版和重制版的 `.rep` 文件，重看过去的比赛。 [打开 STL 录像库](https://cnstl.cn/app/index.html#match/1/replays)
 
-Supports standard multiplayer playback. Built-in AI and some custom-map
-triggers are not implemented.
+## 本地观看录像
 
-[Open the viewer](https://dgant.github.io/openbw-replay-viewer/).
+在 Windows 上安装 Python 3，在仓库根目录用 PowerShell 启动播放器。
 
-## Build
-
-Use the development container and the sibling `openbw` repository:
-
-```bash
-cd /workspace/openbw
-./scripts/build_replay_viewer.sh
+```powershell
+.\start-local-server.ps1
 ```
 
-This builds both replay engines into `docs/v1.4/`, packages the same web assets
-into `desktop/dist/replay-viewer-desktop/`, and verifies that the bundles match.
+打开 [本地播放器](http://127.0.0.1:8080/)，按提示选择从本地导入或确认在线加载游戏资源，然后打开或拖入 `.rep` 文件。经典版需要 `StarDat.mpq`、`BrooDat.mpq` 和 `patch_rt.mpq`。本地播放重制版 REP 时，再选上 `terrain.mpq`。重制版 REP 格式兼容属于回放功能，暴雪高清素材和高清画面仍需另行接入。
 
-## Documentation
+## 2026-11-25 更新
 
-- [HUMANS.md](HUMANS.md): local serving, testing, desktop setup, and publishing.
-- [SPEC.md](SPEC.md): required behavior and verification.
-- [LESSONS.md](LESSONS.md): implementation constraints and testing pitfalls.
-- [UPDATES.md](UPDATES.md): ongoing collaboration practices.
+- **中文播放器**。汉化录像选择、播放操作、数据面板和错误提示。在线加载游戏资源前弹窗确认，也可直接导入本地资源。
+- **命令行工具**。支持自动识别经典版和重制版 REP，无需浏览器即可解析、逐帧模拟和批量检查。停帧时可查看玩家资源及单位位置。
+- **引擎兼容性**。经典版补齐旧比赛地图中的触发器，并按 1.16.1 的规则读取最后一份地图文字表。重制版补齐设置联盟关系的触发器。这些改动已通过本地 CLI 验证，可从仓库中的补丁重新编译。
+- **回归结果**。按录像开局年份分 5 段抽测的 500 份 REP 均可读取并模拟到结尾。495 份通过结束帧、退场和指令检查，5 份仍报告结束帧上的最后一条指令未执行。
 
-The `docs/` tree contains the static website; `desktop/` contains its Neutralino
-wrapper. Engine source, source provenance, and engine/browser tests live in the
-sibling `openbw` repository.
+## REP 命令行工具
+
+| 命令 | 用途 |
+| --- | --- |
+| `info` | 读取地图、玩家、录像时长、APM、退场时间和估计胜队 |
+| `commands` / `build-order` | 按玩家、指令类型或帧区间提取操作和开局流程 |
+| `extract-map` | 导出录像内嵌的 CHK 地图 |
+| `simulate` | 播放到结尾，或在指定帧查看资源和单位快照 |
+| `check` | 扫描录像目录，批量检查解析和回放，导出含失败阶段与帧号的 JSONL |
+
+编译依赖、游戏资源路径和命令示例见 [CLI 使用说明](tools/replay-cli/README.md)。网页、桌面版及构建流程见 [项目维护说明](HUMANS.md)。
+
+## 项目来源
+
+本项目基于 Dan Gant 等贡献者维护的录像播放器分支和 OpenBW。STL 尚未获得 OpenBW 权利人就公开部署或分发引擎的明确授权。游戏数据、画面和音频属于暴雪的独立资源。 [作者署名与授权状态](ATTRIBUTION.md)

@@ -1,0 +1,58 @@
+diff --git a/engines/remastered/actions.h b/engines/remastered/actions.h
+index f6b5d9a..152535e 100644
+--- a/engines/remastered/actions.h
++++ b/engines/remastered/actions.h
+@@ -808,14 +808,7 @@ struct action_functions: state_functions {
+ 	}
+ 
+ 	bool action_set_alliances(int owner, std::array<int, 12> alliances) {
+-		st.alliances.at(owner) = alliances;
+-		for (unit_t* u : ptr(st.player_units[owner])) {
+-			if (u->order_target.unit && u->order_type->targets_enemies) {
+-				if (alliances[u->order_target.unit->owner] && !unit_target_is_enemy(u, u->order_target.unit)) {
+-					u->order_target.unit = nullptr;
+-				}
+-			}
+-		}
++		set_player_alliances(owner, alliances);
+ 		return true;
+ 	}
+ 
+diff --git a/engines/remastered/bwgame.h b/engines/remastered/bwgame.h
+index 7bdee43..a45319f 100644
+--- a/engines/remastered/bwgame.h
++++ b/engines/remastered/bwgame.h
+@@ -8569,6 +8569,17 @@ struct state_functions {
+ 		return true;
+ 	}
+ 
++	void set_player_alliances(int owner, const std::array<int, 12>& alliances) {
++		st.alliances.at(owner) = alliances;
++		for (unit_t* u : ptr(st.player_units[owner])) {
++			if (u->order_target.unit && u->order_type->targets_enemies) {
++				if (alliances[u->order_target.unit->owner] && !unit_target_is_enemy(u, u->order_target.unit)) {
++					u->order_target.unit = nullptr;
++				}
++			}
++		}
++	}
++
+ 	bool unit_target_is_enemy(const unit_t* u, const unit_t* target) const {
+ 		int n_owner = target->owner;
+ 		if (n_owner == 11) n_owner = target->sprite->owner;
+@@ -19335,6 +19346,15 @@ struct state_functions {
+ 				set_unit_resources(u, a.group2_n);
+ 			}
+ 			return true;
++		case 57: { // Set Alliance Status, from the trigger owner toward the selected players.
++			if (a.extra_n > 2) error("unknown trigger alliance status %d", a.extra_n);
++			auto alliances = st.alliances.at(owner);
++			for (int player : trigger_players(owner, a.group_n)) {
++				alliances[player] = a.extra_n;
++			}
++			set_player_alliances(owner, alliances);
++			return true;
++		}
+ 		default:
+ 			error("unknown trigger action %d", a.type);
+ 			return false;

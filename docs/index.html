@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html class="" lang="en-US"><head>
+<html class="" lang="zh-CN"><head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>StarCraft Replay Viewer</title>
+            <title>STL 星际争霸录像播放器</title>
     <link rel="icon" href="data:,">
     <link rel="dns-prefetch" href="https://ajax.googleapis.com/">
     <link rel="dns-prefetch" href="https://s.w.org/">
     <link rel="stylesheet" id="main-stylesheet-css" href="foundation.css?ver=2.6.1" type="text/css" media="all">
+    <link rel="stylesheet" href="v1.4/stl-zh.css">
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js?ver=2.1.0"></script>
         <meta class="foundation-mq"></head>
         <body class="page-template page-template-page-templates page-template-replay-viewer page-template-page-templatesreplay-viewer-php page page-id-39 offcanvas pregame-active pregame-boot-pending" data-whatinput="mouse">
@@ -24,18 +25,19 @@
             <div id="canvas-area" class="canvas-area" style="overflow: hidden;">
                 <div id="pregame-overlay" class="pregame-screen">
                     <div class="pregame-dropzone">
-                       <div class="pregame-drop-copy">Drop a replay file here</div>
-                       <div class="pregame-drop-divider"><span></span><strong>OR</strong><span></span></div>
-                       <label id="select_replay_label" for="select_rep_file" class="success button pregame-browse-button">Browse files</label><br>
+                       <div class="pregame-drop-copy">将 REP 录像拖到这里</div>
+                       <div class="pregame-drop-divider"><span></span><strong>或</strong><span></span></div>
+                       <label id="select_replay_label" for="select_rep_file" class="success button pregame-browse-button">打开录像</label><br>
                        <input id="select_rep_file" type="file" class="show-for-sr" accept=".rep">
                     </div>
                     <div class="pregame-notes">
-                      <h2>Watch replays</h2>
+                      <h2>观看录像</h2>
                       <ul>
-                        <li><a data-open="quick_help" aria-controls="quick_help" aria-haspopup="true" tabindex="0"><u>H</u>otkeys</a></li>
-                        <li>StarCraft 1.16.1 and Remastered</li>
-                        <li>Built-in AI not supported</li>
-                        <li><a href="https://github.com/dgant/openbw-replay-viewer/issues">Report bugs</a></li>
+                        <li><a data-open="quick_help" aria-controls="quick_help" aria-haspopup="true" tabindex="0">快捷键（H）</a></li>
+                        <li>支持经典版与重制版录像</li>
+                        <li>暂不支持内置电脑 AI 对局</li>
+                        <li><button id="open-resource-consent" class="button small secondary" type="button">加载游戏资源</button></li>
+                        <li><a href="https://github.com/dgant/openbw-replay-viewer/issues">反馈问题</a></li>
                       </ul>
                     </div>
                 </div>
@@ -45,32 +47,32 @@
                     </div>
                 </div>
                 <div id="zoom-buttons" style="position: absolute; bottom: 16px; right: 16px; display: none; z-index:100;">
-                    <button class="button secondary small" id="zoom-in" title="Zoom in">+</button>
-                    <button id="rv-rc-force-colors" type="button" class="rv-rc-force-colors" title="Force red vs blue colors"></button>
-                    <button class="button secondary small" id="zoom-out" title="Zoom out">-</button>
-                    <button id="rv-rc-observer" type="button" class="rv-rc-observer is-enabled" title="Toggle auto observer"></button>
-                    <button id="rv-rc-fow" type="button" class="rv-rc-fow is-enabled" title="Toggle fog of war"></button>
+                    <button class="button secondary small" id="zoom-in" title="放大">+</button>
+                    <button id="rv-rc-force-colors" type="button" class="rv-rc-force-colors" title="统一为红蓝双方"></button>
+                    <button class="button secondary small" id="zoom-out" title="缩小">-</button>
+                    <button id="rv-rc-observer" type="button" class="rv-rc-observer is-enabled" title="切换自动观战镜头"></button>
+                    <button id="rv-rc-fow" type="button" class="rv-rc-fow is-enabled" title="切换战争迷雾"></button>
                 </div>
                 <div id="viewport-export" style="position: absolute; top: 16px; right: 16px; display: none; z-index: 100;">
-                    <button id="rv-rc-open-replay" type="button" class="button success small rv-rc-open-replay" title="Open replay"></button>
-                    <a id="rv-rc-game-log" class="button success small rv-rc-game-log" target="_blank" rel="noopener" title="Open game log" aria-label="Open game log" hidden></a>
-                    <button id="rv-rc-download-replay" type="button" class="button success small rv-rc-download-replay" title="Download replay"></button>
-                    <button id="rv-rc-copy-link" type="button" class="button success small rv-rc-copy-link" title="Copy replay link for current frame"></button>
-                    <button id="rv-rc-export" type="button" class="button success small rv-rc-export" title="Export replay video"></button>
-                    <button id="rv-rc-export-settings" type="button" class="button success small rv-rc-export-settings" title="Settings"></button>
+                    <button id="rv-rc-open-replay" type="button" class="button success small rv-rc-open-replay" title="打开录像"></button>
+                    <a id="rv-rc-game-log" class="button success small rv-rc-game-log" target="_blank" rel="noopener" title="打开对局日志" aria-label="打开对局日志" hidden></a>
+                    <button id="rv-rc-download-replay" type="button" class="button success small rv-rc-download-replay" title="下载录像"></button>
+                    <button id="rv-rc-copy-link" type="button" class="button success small rv-rc-copy-link" title="复制当前进度的录像链接"></button>
+                    <button id="rv-rc-export" type="button" class="button success small rv-rc-export" title="导出录像视频"></button>
+                    <button id="rv-rc-export-settings" type="button" class="button success small rv-rc-export-settings" title="设置"></button>
                 </div>
                 <div id="playlist-controls" style="position: absolute; bottom: 16px; display: none; z-index: 100;">
-                    <button id="playlist-prev" type="button" class="playlist-nav" title="Previous replay">&#8592;</button>
-                    <button id="playlist-next" type="button" class="playlist-nav" title="Next replay">&#8594;</button>
+                    <button id="playlist-prev" type="button" class="playlist-nav" title="上一场">&#8592;</button>
+                    <button id="playlist-next" type="button" class="playlist-nav" title="下一场">&#8594;</button>
                     <span id="playlist-position"></span>
                     <span id="playlist-name"></span>
                 </div>
                 <aside draggable="true" id="info_tab" class="info_tab">
                 <ul class="tabs" data-tabs="2el777-tabs" id="info-tabs">
-                    <li class="tabs-title is-active" role="presentation"><a id="tab_link1" href="#info_tab_panel1" aria-selected="true" role="tab" aria-controls="info_tab_panel1">Production</a></li>
-                    <li class="tabs-title" role="presentation"><a id="tab_link2" href="#info_tab_panel2" role="tab" aria-controls="info_tab_panel2" aria-selected="false">Army</a></li>
-                    <li class="tabs-title" role="presentation"><a id="tab_link3" href="#info_tab_panel3" role="tab" aria-controls="info_tab_panel3" aria-selected="false">Tech</a></li>
-                    <li class="tabs-title info-tab-hidden" role="presentation"><a id="tab_link4" href="#info_tab_panel4" role="tab" aria-controls="info_tab_panel4" aria-selected="false">Research</a></li>
+                    <li class="tabs-title is-active" role="presentation"><a id="tab_link1" href="#info_tab_panel1" aria-selected="true" role="tab" aria-controls="info_tab_panel1">生产</a></li>
+                    <li class="tabs-title" role="presentation"><a id="tab_link2" href="#info_tab_panel2" role="tab" aria-controls="info_tab_panel2" aria-selected="false">军队</a></li>
+                    <li class="tabs-title" role="presentation"><a id="tab_link3" href="#info_tab_panel3" role="tab" aria-controls="info_tab_panel3" aria-selected="false">科技</a></li>
+                    <li class="tabs-title info-tab-hidden" role="presentation"><a id="tab_link4" href="#info_tab_panel4" role="tab" aria-controls="info_tab_panel4" aria-selected="false">研究</a></li>
                 </ul>
                 <div class="tabs-content" data-tabs-content="info-tabs">
                     <div class="tabs-panel is-active" id="info_tab_panel1" role="tabpanel" aria-hidden="false" aria-labelledby="tab_link1">
@@ -245,7 +247,7 @@
             </aside>
                                     <aside draggable="true" id="graphs_tab" class="info_tab">
                 <ul class="tabs" data-tabs="7ldsst-tabs" id="graphs-tabs">
-                    <li class="tabs-title is-active" role="presentation"><a id="graphs_link1" href="#graph_tab_panel1" aria-selected="true" role="tab" aria-controls="graph_tab_panel1">Resources</a></li>
+                    <li class="tabs-title is-active" role="presentation"><a id="graphs_link1" href="#graph_tab_panel1" aria-selected="true" role="tab" aria-controls="graph_tab_panel1">资源</a></li>
                     <!-- <li class="tabs-title"><a id="graphs_link2" href="#graph_tab_panel2">Unused</a></li>
                      -->
                 </ul>
@@ -262,15 +264,15 @@
                         <div class="rv_ib_vision" aria-hidden="true"></div>
                         <div class="small-1 columns rv_ib_race" id="map_label1">&nbsp;</div>
                         <div class="small-3 columns rv_ib_nick" id="map1">&nbsp;</div>
-                        <div class="small-2 columns rv_ib_supply">SUPPLY</div>
-                        <div class="small-1 columns rv_ib_minerals">MINERALS</div>
-                        <div class="small-1 columns rv_ib_gas">GAS</div>
-                        <div class="small-1 columns rv_ib_worker">WORKERS</div>
-                        <div class="small-1 columns rv_ib_army">ARMY</div>
+                        <div class="small-2 columns rv_ib_supply">人口</div>
+                        <div class="small-1 columns rv_ib_minerals">晶矿</div>
+                        <div class="small-1 columns rv_ib_gas">气矿</div>
+                        <div class="small-1 columns rv_ib_worker">工人</div>
+                        <div class="small-1 columns rv_ib_army">军队</div>
                         <div class="small-2 columns rv_ib_apm">APM</div>
                     </div>
                     <div class="row infobar-player" id="infobar_row_player1">
-                        <button class="rv_ib_vision is-enabled" id="vision1" type="button" title="Toggle player vision"></button>
+                        <button class="rv_ib_vision is-enabled" id="vision1" type="button" title="切换选手视野"></button>
                         <div class="small-1 columns rv_ib_race" id="race1">&nbsp;</div>
                         <div class="small-3 columns rv_ib_nick player_color1" id="nick1"></div>
                         <div class="small-2 columns rv_ib_supply" id="supply1"></div>
@@ -284,15 +286,15 @@
                         <div class="rv_ib_vision" aria-hidden="true"></div>
                         <div class="small-1 columns rv_ib_race" id="map_label2">&nbsp;</div>
                         <div class="small-3 columns rv_ib_nick" id="map2">&nbsp;</div>
-                        <div class="small-2 columns rv_ib_supply">SUPPLY</div>
-                        <div class="small-1 columns rv_ib_minerals">MINERALS</div>
-                        <div class="small-1 columns rv_ib_gas">GAS</div>
-                        <div class="small-1 columns rv_ib_worker">WORKERS</div>
-                        <div class="small-1 columns rv_ib_army">ARMY</div>
+                        <div class="small-2 columns rv_ib_supply">人口</div>
+                        <div class="small-1 columns rv_ib_minerals">晶矿</div>
+                        <div class="small-1 columns rv_ib_gas">气矿</div>
+                        <div class="small-1 columns rv_ib_worker">工人</div>
+                        <div class="small-1 columns rv_ib_army">军队</div>
                         <div class="small-2 columns rv_ib_apm">APM</div>
                     </div>
                         <div class="row infobar-player per-player-info2" style="display:none">
-                            <button class="rv_ib_vision is-enabled" id="vision2" type="button" title="Toggle player vision"></button>
+                            <button class="rv_ib_vision is-enabled" id="vision2" type="button" title="切换选手视野"></button>
                             <div class="small-1 columns rv_ib_race" id="race2">&nbsp;</div>
                             <div class="small-3 columns rv_ib_nick player_color2" id="nick2"></div>
                             <div class="small-2 columns rv_ib_supply" id="supply2"></div>
@@ -304,7 +306,7 @@
                         </div>
                     
                         <div class="row infobar-player per-player-info3" style="display:none">
-                            <button class="rv_ib_vision is-enabled" id="vision3" type="button" title="Toggle player vision"></button>
+                            <button class="rv_ib_vision is-enabled" id="vision3" type="button" title="切换选手视野"></button>
                             <div class="small-1 columns rv_ib_race" id="race3">&nbsp;</div>
                             <div class="small-3 columns rv_ib_nick player_color3" id="nick3"></div>
                             <div class="small-2 columns rv_ib_supply" id="supply3"></div>
@@ -316,7 +318,7 @@
                         </div>
                     
                         <div class="row infobar-player per-player-info4" style="display:none">
-                            <button class="rv_ib_vision is-enabled" id="vision4" type="button" title="Toggle player vision"></button>
+                            <button class="rv_ib_vision is-enabled" id="vision4" type="button" title="切换选手视野"></button>
                             <div class="small-1 columns rv_ib_race" id="race4">&nbsp;</div>
                             <div class="small-3 columns rv_ib_nick player_color4" id="nick4"></div>
                             <div class="small-2 columns rv_ib_supply" id="supply4"></div>
@@ -328,7 +330,7 @@
                         </div>
                     
                         <div class="row infobar-player per-player-info5" style="display:none">
-                            <button class="rv_ib_vision is-enabled" id="vision5" type="button" title="Toggle player vision"></button>
+                            <button class="rv_ib_vision is-enabled" id="vision5" type="button" title="切换选手视野"></button>
                             <div class="small-1 columns rv_ib_race" id="race5">&nbsp;</div>
                             <div class="small-3 columns rv_ib_nick player_color5" id="nick5"></div>
                             <div class="small-2 columns rv_ib_supply" id="supply5"></div>
@@ -340,7 +342,7 @@
                         </div>
                     
                         <div class="row infobar-player per-player-info6" style="display:none">
-                            <button class="rv_ib_vision is-enabled" id="vision6" type="button" title="Toggle player vision"></button>
+                            <button class="rv_ib_vision is-enabled" id="vision6" type="button" title="切换选手视野"></button>
                             <div class="small-1 columns rv_ib_race" id="race6">&nbsp;</div>
                             <div class="small-3 columns rv_ib_nick player_color6" id="nick6"></div>
                             <div class="small-2 columns rv_ib_supply" id="supply6"></div>
@@ -352,7 +354,7 @@
                         </div>
                     
                         <div class="row infobar-player per-player-info7" style="display:none">
-                            <button class="rv_ib_vision is-enabled" id="vision7" type="button" title="Toggle player vision"></button>
+                            <button class="rv_ib_vision is-enabled" id="vision7" type="button" title="切换选手视野"></button>
                             <div class="small-1 columns rv_ib_race" id="race7">&nbsp;</div>
                             <div class="small-3 columns rv_ib_nick player_color7" id="nick7"></div>
                             <div class="small-2 columns rv_ib_supply" id="supply7"></div>
@@ -364,7 +366,7 @@
                         </div>
                     
                         <div class="row infobar-player per-player-info8" style="display:none">
-                            <button class="rv_ib_vision is-enabled" id="vision8" type="button" title="Toggle player vision"></button>
+                            <button class="rv_ib_vision is-enabled" id="vision8" type="button" title="切换选手视野"></button>
                             <div class="small-1 columns rv_ib_race" id="race8">&nbsp;</div>
                             <div class="small-3 columns rv_ib_nick player_color8" id="nick8"></div>
                             <div class="small-2 columns rv_ib_supply" id="supply8"></div>
@@ -379,9 +381,9 @@
                 
                 <div id="info-dock" class="shrink column bottom-info-dock">
                     <div class="info-dock-header">
-                        <div class="info-dock-title info-dock-title-production">Production</div>
-                        <div class="info-dock-title">Army</div>
-                        <div class="info-dock-title">Tech</div>
+                        <div class="info-dock-title info-dock-title-production">生产</div>
+                        <div class="info-dock-title">军队</div>
+                        <div class="info-dock-title">科技</div>
                     </div>
                     <div id="info-dock-body"></div>
                 </div>
@@ -396,19 +398,19 @@
                                     <input type="hidden" id="volumeOutput" max="100" min="0" step="1" value="50">
                                 </div>
                             </div>
-                            <button id="rv-rc-sound" type="button" class="rv-rc-sound"></button>
+                            <button id="rv-rc-sound" aria-label="静音或开启声音" type="button" class="rv-rc-sound"></button>
                         </div>
                         <div class="small-3 columns">
-                            <button id="rv-rc-play" type="button" class="rv-rc-pause"></button>
+                            <button id="rv-rc-play" aria-label="播放或暂停" type="button" class="rv-rc-pause"></button>
                         </div>
                         <div class="small-3 columns">
-                            <button id="rv-rc-slower" type="button" class="rv-rc-slower"></button>
+                            <button id="rv-rc-slower" aria-label="减慢播放" type="button" class="rv-rc-slower"></button>
                         </div>
                         <div class="small-3 columns">
-                            <button id="rv-rc-faster" type="button" class="rv-rc-faster"></button>
+                            <button id="rv-rc-faster" aria-label="加快播放" type="button" class="rv-rc-faster"></button>
                         </div>
                         <div id="rv-rc-next-embedded-wrap" class="small-3 columns" style="display:none;">
-                            <button id="rv-rc-next-embedded" type="button" class="rv-rc-next-embedded" title="Next replay"></button>
+                            <button id="rv-rc-next-embedded" type="button" class="rv-rc-next-embedded" title="下一场"></button>
                         </div>
                     </div>
                     <div class="row rv-rc-timer">
@@ -418,7 +420,7 @@
                     <div class="row rv-rc-progress-bar">
                         <div class="column">
                             <div id="game-slider" class="slider" data-slider="104llm-slider" data-initial-start="0" data-end="200">
-                                <span id="game-slider-handle" class="slider-handle" data-slider-handle="" role="slider" tabindex="0" aria-controls="sliderOutput" aria-valuemax="200" aria-valuemin="0" aria-valuenow="0" aria-orientation="horizontal" style="left: 0%;"></span>
+                                <span id="game-slider-handle" aria-label="录像进度" class="slider-handle" data-slider-handle="" role="slider" tabindex="0" aria-controls="sliderOutput" aria-valuemax="200" aria-valuemin="0" aria-valuenow="0" aria-orientation="horizontal" style="left: 0%;"></span>
                                   <span class="slider-fill" data-slider-fill="" style="width: 0%;"></span>
                                   <input type="hidden" id="sliderOutput" max="200" min="0" step="1" value="0">
                             </div>
@@ -445,153 +447,166 @@
             
     
     
+    <dialog id="resource-consent" class="resource-consent" aria-labelledby="resource-consent-title" aria-describedby="resource-consent-description">
+      <h2 id="resource-consent-title">加载暴雪游戏资源</h2>
+      <p id="resource-consent-description">播放录像需要《星际争霸：母巢之战》的经典画面和声音。你可以读取自己的 MPQ 文件，也可以确认从下方地址下载约 90 MB 的资源。录像文件留在浏览器内。</p>
+      <p class="resource-consent-source">在线资源地址 <span id="resource-source"></span></p>
+      <p>本地模式请选择 StarDat.mpq、BrooDat.mpq 和 Patch_rt.mpq。播放重制版格式的录像时，也可同时选择 terrain.mpq。</p>
+      <p id="resource-error" class="resource-consent-error" role="alert" hidden></p>
+      <input id="local-game-mpqs" type="file" accept=".mpq" multiple hidden>
+      <div class="resource-consent-actions">
+        <button id="cancel-resource-consent" type="button" class="button secondary" autofocus>暂不加载</button>
+        <button id="select-local-game-resources" type="button" class="button secondary">选择本地资源</button>
+        <button id="confirm-online-game-resources" type="button" class="button success">确认在线加载</button>
+      </div>
+    </dialog>
     <script type="text/javascript" src="foundation.js?ver=2.6.1"></script>
     <div class="reveal-overlay"><div class="reveal" id="quick_help" data-reveal="l2qsst-reveal" role="dialog" aria-hidden="true" data-yeti-box="quick_help" data-resize="quick_help">
-      <button class="close-button" data-close="" aria-label="Close reveal" type="button"><br>
+      <button class="close-button" data-close="" aria-label="关闭" type="button"><br>
         <span aria-hidden="true">×</span><br>
       </button><p></p>
-    <h4>Hotkeys</h4>
+    <h3>快捷键</h3>
     <table>
     <thead>
     <tr>
-    <th width="200">Key</th>
-    <th>Description</th>
+    <th width="200">按键</th>
+    <th>说明</th>
     </tr>
     </thead>
     <tbody>
     <tr>
     <td><strong>N</strong></td>
-    <td>No-spoiler mode.</td>
+    <td>切换防剧透模式。</td>
     </tr>
     <tr>
     <td><strong>A</strong></td>
-    <td>Double playback speed.</td>
+    <td>播放速度加倍。</td>
     </tr>
     <tr>
     <td><strong>D</strong></td>
-    <td>Halve playback speed.</td>
+    <td>播放速度减半。</td>
     </tr>
     <tr>
-    <td><strong>SPACE</strong></td>
-    <td>Pause/unpause.</td>
+    <td><strong>空格</strong></td>
+    <td>暂停或继续播放。</td>
     </tr>
     <tr>
     <td><strong>Q</strong>, <strong>W</strong>, <strong>E</strong>, <strong>R</strong></td>
-    <td>Pause, then jump -10/-1/+1/+10 frames.</td>
+    <td>暂停并跳转 −10／−1／+1／+10 帧。</td>
     </tr>
     <tr>
     <td><strong>Z</strong>, <strong>X</strong>, <strong>C</strong>, <strong>V</strong></td>
-    <td>Jump -30/-10/+10/+30 seconds.</td>
+    <td>跳转 −30／−10／+10／+30 秒。</td>
     </tr>
     <tr>
     <td><strong>&larr;</strong> <strong>&uarr;</strong> <strong>&rarr;</strong> <strong>&darr;</strong></td>
-    <td>Pan camera.</td>
+    <td>移动镜头。</td>
     </tr>
     <tr>
     <td><strong>-</strong>, <strong>+</strong></td>
-    <td>Zoom out/in.</td>
+    <td>缩小或放大。</td>
     </tr>
     <tr>
     <td><strong>G</strong></td>
-    <td>Show/hide info graphs.</td>
+    <td>显示或隐藏数据图表。</td>
     </tr>
     <tr>
     <td><strong>J</strong></td>
-    <td>Open the jump dialog.</td>
+    <td>打开跳转窗口。</td>
     </tr>
     </tbody>
     </table>
     </div></div>
     <div class="reveal-overlay" style="display: none;"><div class="reveal" id="rv_modal" data-reveal="2g7eee-reveal" role="dialog" aria-hidden="true" data-yeti-box="rv_modal" data-resize="rv_modal" style="display: none; top: 102px;" tabindex="-1">
-                 <h3><span class="loading-spinner" aria-hidden="true"></span>Loading files</h3>
-                <p>Patch_rt.mpq: success.</p>
-                <button class="close-button" data-close="" aria-label="Close reveal" type="button">
+                 <h3><span class="loading-spinner" aria-hidden="true"></span>正在加载游戏资源</h3>
+                <p></p>
+                <button class="close-button" data-close="" aria-label="关闭" type="button">
                     <span aria-hidden="true">×</span>
                 </button>
             </div></div>
     <div class="reveal-overlay" style="display: none;">
         <div class="reveal" id="goto" data-reveal="1kjf7s-reveal" role="dialog" aria-hidden="true" data-yeti-box="goto" data-resize="goto" style="display: none; top: 102px;" tabindex="-1">
-            <h3>Goto frame/time</h3>
+            <h3>跳转到指定位置</h3>
             <div class="input-group">
-                <span class="input-group-label">Frame</span>
+                <span class="input-group-label">帧</span>
                 <input id="goto-frame-value" class="input-group-field" type="number" min="0" data-submit-button="goto-frame-submit">
                 <div class="input-group-button">
-                    <input id="goto-frame-submit" type="submit" class="button" value="Go!">
+                    <input id="goto-frame-submit" type="submit" class="button" value="跳转">
                 </div>
             </div>
             <div class="input-group">
-                <span class="input-group-label">Time</span>
+                <span class="input-group-label">时间</span>
                 <input id="goto-time-value" class="input-group-field" type="text" data-submit-button="goto-time-submit">
                 <div class="input-group-button">
-                    <input id="goto-time-submit" type="submit" class="button" value="Go!">
+                    <input id="goto-time-submit" type="submit" class="button" value="跳转">
                 </div>
             </div>
-            <button class="close-button" data-close="" aria-label="Close reveal" type="button">
+            <button class="close-button" data-close="" aria-label="关闭" type="button">
                 <span aria-hidden="true">×</span>
             </button>
         </div>
     </div>
     <div class="reveal-overlay" style="display: none;">
         <div class="reveal" id="export_settings" data-reveal role="dialog" aria-hidden="true" tabindex="-1">
-            <h3>Settings</h3>
+            <h3>设置</h3>
             <div class="settings-tab-buttons">
-                <button id="settings-tab-audio" type="button" class="settings-tab-button is-active">Audio</button>
-                <button id="settings-tab-video" type="button" class="settings-tab-button">Video Clips</button>
+                <button id="settings-tab-audio" type="button" class="settings-tab-button is-active">声音</button>
+                <button id="settings-tab-video" type="button" class="settings-tab-button">视频导出</button>
             </div>
             <div class="settings-panel" data-settings-panel="audio" hidden>
                 <div class="settings-audio-row">
-                    <span class="settings-audio-label">Overall</span>
-                    <button id="audio-overall-toggle" type="button" class="settings-audio-toggle rv-rc-sound" aria-label="Toggle overall audio" aria-pressed="true"></button>
+                    <span class="settings-audio-label">总音量</span>
+                    <button id="audio-overall-toggle" type="button" class="settings-audio-toggle rv-rc-sound" aria-label="切换总音量静音" aria-pressed="true"></button>
                     <input id="audio-overall-slider" class="settings-audio-slider" type="range" min="0" max="100" step="1">
                     <span id="audio-overall-value" class="settings-audio-value">100%</span>
                 </div>
                 <div class="settings-audio-row">
-                    <span class="settings-audio-label">Combat</span>
-                    <button id="audio-combat-toggle" type="button" class="settings-audio-toggle rv-rc-sound" aria-label="Toggle combat audio" aria-pressed="true"></button>
+                    <span class="settings-audio-label">战斗音效</span>
+                    <button id="audio-combat-toggle" type="button" class="settings-audio-toggle rv-rc-sound" aria-label="切换战斗音效静音" aria-pressed="true"></button>
                     <input id="audio-combat-slider" class="settings-audio-slider" type="range" min="0" max="100" step="1">
                     <span id="audio-combat-value" class="settings-audio-value">100%</span>
                 </div>
                 <div class="settings-audio-row">
-                    <span class="settings-audio-label">Acknowledgements</span>
-                    <button id="audio-acknowledgements-toggle" type="button" class="settings-audio-toggle rv-rc-sound" aria-label="Toggle acknowledgement audio" aria-pressed="true"></button>
+                    <span class="settings-audio-label">单位语音</span>
+                    <button id="audio-acknowledgements-toggle" type="button" class="settings-audio-toggle rv-rc-sound" aria-label="切换单位语音静音" aria-pressed="true"></button>
                     <input id="audio-acknowledgements-slider" class="settings-audio-slider" type="range" min="0" max="100" step="1">
                     <span id="audio-acknowledgements-value" class="settings-audio-value">100%</span>
                 </div>
                 <div class="settings-audio-row">
-                    <span class="settings-audio-label">Music</span>
-                    <button id="audio-music-toggle" type="button" class="settings-audio-toggle rv-rc-sound" aria-label="Toggle music audio" aria-pressed="true"></button>
+                    <span class="settings-audio-label">背景音乐</span>
+                    <button id="audio-music-toggle" type="button" class="settings-audio-toggle rv-rc-sound" aria-label="切换背景音乐静音" aria-pressed="true"></button>
                     <input id="audio-music-slider" class="settings-audio-slider" type="range" min="0" max="100" step="1">
                     <span id="audio-music-value" class="settings-audio-value">100%</span>
                 </div>
                 <div class="button-group">
-                    <button id="audio-settings-reset" type="button" class="button success">Reset</button>
+                    <button id="audio-settings-reset" type="button" class="button success">恢复默认</button>
                 </div>
             </div>
             <div class="settings-panel" data-settings-panel="video" hidden>
                 <div class="input-group">
-                    <span class="input-group-label">Width</span>
+                    <span class="input-group-label">宽度</span>
                     <input id="export-width" class="input-group-field" type="number" min="1" step="1">
                     <span class="input-group-label">px</span>
                 </div>
                 <div class="input-group">
-                    <span class="input-group-label">Height</span>
+                    <span class="input-group-label">高度</span>
                     <input id="export-height" class="input-group-field" type="number" min="1" step="1">
                     <span class="input-group-label">px</span>
                 </div>
                 <div class="input-group">
-                    <span class="input-group-label">FPS</span>
+                    <span class="input-group-label">帧率</span>
                     <input id="export-fps" class="input-group-field" type="number" min="1" step="1">
                 </div>
                 <div class="input-group">
-                    <span class="input-group-label">Bitrate</span>
+                    <span class="input-group-label">码率</span>
                     <input id="export-bitrate" class="input-group-field" type="number" min="0.1" step="0.1">
                     <span class="input-group-label">Mbps</span>
                 </div>
                 <div class="button-group">
-                    <button id="export-settings-reset" type="button" class="button success">Reset</button>
+                    <button id="export-settings-reset" type="button" class="button success">恢复默认</button>
                 </div>
             </div>
-            <button class="close-button" data-close aria-label="Close reveal" type="button">
+            <button class="close-button" data-close aria-label="关闭" type="button">
                 <span aria-hidden="true">×</span>
             </button>
         </div>
@@ -613,7 +628,7 @@
         document.write('<script src="/neutralino.js"><\/script>');
         document.write('<script src="/desktop-settings.js"><\/script>');
     }
-    window.OPENBW_WINDOW_TITLE = "StarCraft Replay Viewer";
+    window.OPENBW_WINDOW_TITLE = "STL 星际争霸录像播放器";
     /* ]]> */
     </script>
     <script type="text/javascript">

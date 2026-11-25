@@ -1,0 +1,170 @@
+diff --git a/engines/classic/actions.h b/engines/classic/actions.h
+index 5a0ad23..6b445cc 100644
+--- a/engines/classic/actions.h
++++ b/engines/classic/actions.h
+@@ -808,14 +808,7 @@ struct action_functions: state_functions {
+ 	}
+ 
+ 	bool action_set_alliances(int owner, std::array<int, 12> alliances) {
+-		st.alliances.at(owner) = alliances;
+-		for (unit_t* u : ptr(st.player_units[owner])) {
+-			if (u->order_target.unit && u->order_type->targets_enemies) {
+-				if (alliances[u->order_target.unit->owner] && !unit_target_is_enemy(u, u->order_target.unit)) {
+-					u->order_target.unit = nullptr;
+-				}
+-			}
+-		}
++		set_player_alliances(owner, alliances);
+ 		return true;
+ 	}
+ 
+diff --git a/engines/classic/bwgame.h b/engines/classic/bwgame.h
+index 1f45b9d..4e6a720 100644
+--- a/engines/classic/bwgame.h
++++ b/engines/classic/bwgame.h
+@@ -244,6 +244,7 @@ struct state_base_copyable {
+ 	std::array<a_vector<running_trigger>, 8> running_triggers;
+ 	std::array<int, 12> trigger_wait_timers;
+ 	std::array<bool, 12> trigger_waiting;
++	std::array<bool, 256> trigger_switches{};
+ 
+ 	size_t active_orders_size;
+ 	size_t active_bullets_size;
+@@ -8563,6 +8564,17 @@ struct state_functions {
+ 		return true;
+ 	}
+ 
++	void set_player_alliances(int owner, const std::array<int, 12>& alliances) {
++		st.alliances.at(owner) = alliances;
++		for (unit_t* u : ptr(st.player_units[owner])) {
++			if (u->order_target.unit && u->order_type->targets_enemies) {
++				if (alliances[u->order_target.unit->owner] && !unit_target_is_enemy(u, u->order_target.unit)) {
++					u->order_target.unit = nullptr;
++				}
++			}
++		}
++	}
++
+ 	bool unit_target_is_enemy(const unit_t* u, const unit_t* target) const {
+ 		int n_owner = target->owner;
+ 		if (n_owner == 11) n_owner = target->sprite->owner;
+@@ -18921,6 +18933,11 @@ struct state_functions {
+ 			return trigger_count_comparison(c, trigger_command_count(st, owner, c.group, c.unit_id, c.num_n != 1));
+ 		case 3: // bring
+ 			return trigger_count_comparison(c, trigger_command_count(trigger_bring_count(st.locations.at(c.location - 1)), owner, c.group, c.unit_id, c.num_n != 1));
++		case 11: // Switch
++			if (c.num_n == 2) return st.trigger_switches.at(c.extra_n);
++			if (c.num_n == 3) return !st.trigger_switches.at(c.extra_n);
++			error("unknown trigger switch condition %d", c.num_n);
++			return false;
+ 		case 12: // elapsed time
+ 			return trigger_count_comparison(c, st.current_frame);
+ 		case 14: // opponents
+@@ -19095,6 +19112,22 @@ struct state_functions {
+ 			st.trigger_wait_timers[owner] = a.time_n;
+ 			ra.flags |= 1;
+ 			return false;
++		case 8: // Play WAV
++		case 9: // Display text message
++		case 12: // Set mission objectives
++			// Embedded replay scenarios carry these actions, but not custom WAV files.
++			// These presentation actions do not change the simulated game state.
++			return true;
++		case 13: { // Set Switch
++			auto& value = st.trigger_switches.at(a.group2_n);
++			switch (a.num_n) {
++			case 4: value = true; break;
++			case 5: value = false; break;
++			case 6: value = !value; break;
++			default: error("unknown trigger switch action %d", a.num_n);
++			}
++			return true;
++		}
+ 		case 15: // ai script
+ 			switch (a.group2_n) {
+ 			case 0x3069562b:
+@@ -19125,6 +19158,10 @@ struct state_functions {
+ 				error("unknown ai script");
+ 			}
+ 			return true;
++		case 20: // Leaderboard (Kills)
++		case 21: // Leaderboard (Points)
++			// Leaderboard display does not change scores or other simulation state.
++			return true;
+ 		case 22: // kill unit
+ 			for (int p : trigger_players(owner, a.group_n)) {
+ 				int uid = a.extra_n;
+@@ -19329,6 +19366,15 @@ struct state_functions {
+ 				set_unit_resources(u, a.group2_n);
+ 			}
+ 			return true;
++		case 57: { // Set Alliance Status, from the trigger owner toward the selected players.
++			if (a.extra_n > 2) error("unknown trigger alliance status %d", a.extra_n);
++			auto alliances = st.alliances.at(owner);
++			for (int player : trigger_players(owner, a.group_n)) {
++				alliances[player] = a.extra_n;
++			}
++			set_player_alliances(owner, alliances);
++			return true;
++		}
+ 		default:
+ 			error("unknown trigger action %d", a.type);
+ 			return false;
+@@ -20019,6 +20065,7 @@ struct game_load_functions : state_functions {
+ 		st.running_triggers = {};
+ 		st.trigger_wait_timers = {};
+ 		st.trigger_waiting = {};
++		st.trigger_switches = {};
+ 
+ 		int max_unit_width = 0;
+ 		int max_unit_height = 0;
+@@ -21291,8 +21338,13 @@ struct game_load_functions : state_functions {
+ 					if (std::get<1>(v)) error("map is missing required chunk '%s'", tagstr(tag));
+ 				} else {
+ 					if (!tag_funcs[tag]) error("tag '%s' is missing a function", tagstr(tag));
+-					for (auto& v : i->second) {
+-						tag_funcs[tag](v);
++					if (tag == "STR ") {
++						// Brood War 1.16.1 uses the last string table in the scenario.
++						tag_funcs[tag](i->second.back());
++					} else {
++						for (auto& v : i->second) {
++							tag_funcs[tag](v);
++						}
+ 					}
+ 				}
+ 			}
+@@ -21324,22 +21376,24 @@ struct game_load_functions : state_functions {
+ 			}
+ 		};
+ 		tag_funcs["STR "] = [&](data_reader_le r) {
++			game_st.map_strings.clear();
+ 			if (r.left() < 2) return;
+ 			auto start = r;
+ 			size_t num = r.get<uint16_t>();
+-			game_st.map_strings.clear();
++			num = std::min(num, r.left() / sizeof(uint16_t));
+ 			game_st.map_strings.resize(num);
+ 			for (size_t i = 0; i != num; ++i) {
+ 				size_t offset = r.get<uint16_t>();
+-				auto t = start;
+-				if (offset < t.left()) {
+-					t.skip(offset);
+-					char* b = (char*)t.ptr;
+-					while (t.get<char>());
+-					game_st.map_strings[i] = a_string(b, (char*)t.ptr - b - 1);
+-				} else {
+-					game_st.map_strings[i] = "<invalid string offset>";
++				if (offset < start.left()) {
++					const auto* first = start.ptr + offset;
++					const auto* end = start.ptr + start.left();
++					const auto* terminator = std::find(first, end, uint8_t{0});
++					if (terminator != end) {
++						game_st.map_strings[i] = a_string(reinterpret_cast<const char*>(first), terminator - first);
++						continue;
++					}
+ 				}
++				game_st.map_strings[i] = "<invalid string offset>";
+ 			}
+ 		};
+ 		tag_funcs["SPRP"] = [&](data_reader_le r) {

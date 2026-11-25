@@ -84,9 +84,53 @@ let modalPlaybackState = {
 	openIds: {},
 	resumeOnClose: false
 };
-const UNITTYPES_DISPLAY_NAMES = ["Terran Marine", "Terran Ghost", "Terran Vulture", "Terran Goliath", "Terran Goliath Turret", "Terran Siege Tank Tank Mode", "Terran Siege Tank Tank Mode Turret", "Terran SCV", "Terran Wraith", "Terran Science Vessel", "Hero Gui Montag", "Terran Dropship", "Terran Battlecruiser", "Terran Vulture Spider Mine", "Terran Nuclear Missile", "Terran Civilian", "Hero Sarah Kerrigan", "Hero Alan Schezar", "Hero Alan Schezar Turret", "Hero Jim Raynor Vulture", "Hero Jim Raynor Marine", "Hero Tom Kazansky", "Hero Magellan", "Hero Edmund Duke Tank Mode", "Hero Edmund Duke Tank Mode Turret", "Hero Edmund Duke Siege Mode", "Hero Edmund Duke Siege Mode Turret", "Hero Arcturus Mengsk", "Hero Hyperion", "Hero Norad II", "Terran Siege Tank Siege Mode", "Terran Siege Tank Siege Mode Turret", "Terran Firebat", "Spell Scanner Sweep", "Terran Medic", "Zerg Larva", "Zerg Egg", "Zerg Zergling", "Zerg Hydralisk", "Zerg Ultralisk", "Zerg Broodling", "Zerg Drone", "Zerg Overlord", "Zerg Mutalisk", "Zerg Guardian", "Zerg Queen", "Zerg Defiler", "Zerg Scourge", "Hero Torrasque", "Hero Matriarch", "Zerg Infested Terran", "Hero Infested Kerrigan", "Hero Unclean One", "Hero Hunter Killer", "Hero Devouring One", "Hero Kukulza Mutalisk", "Hero Kukulza Guardian", "Hero Yggdrasill", "Terran Valkyrie", "Zerg Cocoon", "Protoss Corsair", "Protoss Dark Templar", "Zerg Devourer", "Protoss Dark Archon", "Protoss Probe", "Protoss Zealot", "Protoss Dragoon", "Protoss High Templar", "Protoss Archon", "Protoss Shuttle", "Protoss Scout", "Protoss Arbiter", "Protoss Carrier", "Protoss Interceptor", "Hero Dark Templar", "Hero Zeratul", "Hero Tassadar Zeratul Archon", "Hero Fenix Zealot", "Hero Fenix Dragoon", "Hero Tassadar", "Hero Mojo", "Hero Warbringer", "Hero Gantrithor", "Protoss Reaver", "Protoss Observer", "Protoss Scarab", "Hero Danimoth", "Hero Aldaris", "Hero Artanis", "Critter Rhynadon", "Critter Bengalaas", "Special Cargo Ship", "Special Mercenary Gunship", "Critter Scantid", "Critter Kakaru", "Critter Ragnasaur", "Critter Ursadon", "Zerg Lurker Egg", "Hero Raszagal", "Hero Samir Duran", "Hero Alexei Stukov", "Special Map Revealer", "Hero Gerard DuGalle", "Zerg Lurker", "Hero Infested Duran", "Spell Disruption Web", "Terran Command Center", "Terran Comsat Station", "Terran Nuclear Silo", "Terran Supply Depot", "Terran Refinery", "Terran Barracks", "Terran Academy", "Terran Factory", "Terran Starport", "Terran Control Tower", "Terran Science Facility", "Terran Covert Ops", "Terran Physics Lab", "Unused Terran1", "Terran Machine Shop", "Unused Terran2", "Terran Engineering Bay", "Terran Armory", "Terran Missile Turret", "Terran Bunker", "Special Crashed Norad II", "Special Ion Cannon", "Powerup Uraj Crystal", "Powerup Khalis Crystal", "Zerg Infested Command Center", "Zerg Hatchery", "Zerg Lair", "Zerg Hive", "Zerg Nydus Canal", "Zerg Hydralisk Den", "Zerg Defiler Mound", "Zerg Greater Spire", "Zerg Queens Nest", "Zerg Evolution Chamber", "Zerg Ultralisk Cavern", "Zerg Spire", "Zerg Spawning Pool", "Zerg Creep Colony", "Zerg Spore Colony", "Unused Zerg1", "Zerg Sunken Colony", "Special Overmind With Shell", "Special Overmind", "Zerg Extractor", "Special Mature Chrysalis", "Special Cerebrate", "Special Cerebrate Daggoth", "Unused Zerg2", "Protoss Nexus", "Protoss Robotics Facility", "Protoss Pylon", "Protoss Assimilator", "Unused Protoss1", "Protoss Observatory", "Protoss Gateway", "Unused Protoss2", "Protoss Photon Cannon", "Protoss Citadel of Adun", "Protoss Cybernetics Core", "Protoss Templar Archives", "Protoss Forge", "Protoss Stargate", "Special Stasis Cell Prison", "Protoss Fleet Beacon", "Protoss Arbiter Tribunal", "Protoss Robotics Support Bay", "Protoss Shield Battery", "Special Khaydarin Crystal Form", "Special Protoss Temple", "Special XelNaga Temple", "Resource Mineral Field", "Resource Mineral Field Type 2", "Resource Mineral Field Type 3", "Unused Cave", "Unused Cave In", "Unused Cantina", "Unused Mining Platform", "Unused Independant Command Center", "Special Independant Starport", "Unused Independant Jump Gate", "Unused Ruins", "Unused Khaydarin Crystal Formation", "Resource Vespene Geyser", "Special Warp Gate", "Special Psi Disrupter", "Unused Zerg Marker", "Unused Terran Marker", "Unused Protoss Marker", "Special Zerg Beacon", "Special Terran Beacon", "Special Protoss Beacon", "Special Zerg Flag Beacon", "Special Terran Flag Beacon", "Special Protoss Flag Beacon", "Special Power Generator", "Special Overmind Cocoon", "Spell Dark Swarm", "Special Floor Missile Trap", "Special Floor Hatch", "Special Upper Level Door", "Special Right Upper Level Door", "Special Pit Door", "Special Right Pit Door", "Special Floor Gun Trap", "Special Wall Missile Trap", "Special Wall Flame Trap", "Special Right Wall Missile Trap", "Special Right Wall Flame Trap", "Special Start Location", "Powerup Flag", "Powerup Young Chrysalis", "Powerup Psi Emitter", "Powerup Data Disk", "Powerup Khaydarin Crystal", "Powerup Mineral Cluster Type 1", "Powerup Mineral Cluster Type 2", "Powerup Protoss Gas Orb Type 1", "Powerup Protoss Gas Orb Type 2", "Powerup Zerg Gas Sac Type 1", "Powerup Zerg Gas Sac Type 2", "Powerup Terran Gas Tank Type 1", "Powerup Terran Gas Tank Type 2", "None"];
-const UPGRADETYPES_DISPLAY_NAMES = ["Terran Infantry Armor", "Terran Vehicle Plating", "Terran Ship Plating", "Zerg Carapace", "Zerg Flyer Carapace", "Protoss Ground Armor", "Protoss Air Armor", "Terran Infantry Weapons", "Terran Vehicle Weapons", "Terran Ship Weapons", "Zerg Melee Attacks", "Zerg Missile Attacks", "Zerg Flyer Attacks", "Protoss Ground Weapons", "Protoss Air Weapons", "Protoss Plasma Shields", "U 238 Shells", "Ion Thrusters", "Unknown 18", "Titan Reactor", "Ocular Implants", "Moebius Reactor", "Apollo Reactor", "Colossus Reactor", "Ventral Sacs", "Antennae", "Pneumatized Carapace", "Metabolic Boost", "Adrenal Glands", "Muscular Augments", "Grooved Spines", "Gamete Meiosis", "Metasynaptic Node", "Singularity Charge", "Leg Enhancements", "Scarab Damage", "Reaver Capacity", "Gravitic Drive", "Sensor Array", "Gravitic Boosters", "Khaydarin Amulet", "Apial Sensors", "Gravitic Thrusters", "Carrier Capacity", "Khaydarin Core", "Unknown 45", "Unknown 46", "Argus Jewel", "Unknown 48", "Argus Talisman", "Unknown 50", "Caduceus Reactor", "Chitinous Plating", "Anabolic Synthesis", "Charon Boosters"];
-const TECHTYPES_DISPLAY_NAMES = ["Stim Packs", "Lockdown", "EMP Shockwave", "Spider Mines", "Scanner Sweep", "Tank Siege Mode", "Defensive Matrix", "Irradiate", "Yamato Gun", "Cloaking Field", "Personnel Cloaking", "Burrowing", "Infestation", "Spawn Broodlings", "Dark Swarm", "Plague", "Consume", "Ensnare", "Parasite", "Psionic Storm", "Hallucination", "Recall", "Stasis Field", "Archon Warp", "Restoration", "Disruption Web", "Unused 26", "Mind Control", "Dark Archon Meld", "Feedback", "Optical Flare", "Maelstrom", "Lurker Aspect", "Unused 33", "Healing"];
+const UNITTYPES_DISPLAY_NAMES = [
+    "陆战队员", "幽灵特工", "秃鹫战车", "歌利亚机器人", "歌利亚炮塔", "攻城坦克（坦克模式）", "攻城坦克炮塔", "SCV 工程车",
+    "幽灵战机", "科学船", "盖伊·蒙塔格", "运输机", "战列巡航舰", "蜘蛛雷", "核弹", "平民",
+    "莎拉·凯瑞甘", "艾伦·谢扎尔", "谢扎尔炮塔", "吉姆·雷诺（秃鹫战车）", "吉姆·雷诺（陆战队员）", "汤姆·卡赞斯基", "麦哲伦号", "埃德蒙·杜克（坦克模式）",
+    "杜克的坦克炮塔", "埃德蒙·杜克（攻城模式）", "杜克的攻城炮塔", "阿克图尔斯·蒙斯克", "海伯利昂号", "诺拉德二号", "攻城坦克（攻城模式）", "攻城模式炮塔",
+    "火蝠", "雷达扫描", "医疗兵", "幼虫", "虫卵", "跳虫", "刺蛇", "雷兽",
+    "寄生虫", "工蜂", "领主", "飞龙", "守护者", "女王", "蝎子", "自爆飞虫",
+    "托拉斯克", "女王长老", "被感染的人类", "被感染的凯瑞甘", "不洁者", "猎杀者", "吞噬者", "库库尔扎（飞龙）",
+    "库库尔扎（守护者）", "伊格德拉西尔", "瓦格雷护卫舰", "虫茧", "海盗船", "黑暗圣堂武士", "吞噬者", "黑暗执政官",
+    "探机", "狂热者", "龙骑士", "高阶圣堂武士", "执政官", "穿梭机", "侦察机", "仲裁者",
+    "航母", "拦截机", "黑暗圣堂武士英雄", "泽拉图", "塔萨达尔与泽拉图执政官", "菲尼克斯（狂热者）", "菲尼克斯（龙骑士）", "塔萨达尔",
+    "莫乔", "战争使者", "甘翠索号", "金甲虫", "观察者", "圣甲虫炮弹", "达尼莫斯号", "阿尔达瑞斯",
+    "阿塔尼斯", "莱纳顿", "本加拉斯", "货船", "雇佣兵炮艇", "斯坎蒂德", "卡卡鲁", "拉格纳萨尔",
+    "乌尔萨顿", "潜伏者卵", "拉莎加尔", "萨米尔·杜兰", "阿列克谢·斯托科夫", "地图揭示器", "杰拉德·杜加尔", "潜伏者",
+    "被感染的杜兰", "干扰网", "指挥中心", "雷达站", "核弹发射井", "补给站", "精炼厂", "兵营",
+    "学院", "重工厂", "星港", "控制塔", "科学站", "隐秘行动实验室", "物理实验室", "未使用的人族单位 1",
+    "机械车间", "未使用的人族单位 2", "工程站", "军械库", "导弹塔", "地堡", "坠毁的诺拉德二号", "离子炮",
+    "乌拉杰水晶", "卡利斯水晶", "被感染的指挥中心", "孵化场", "虫穴", "主巢", "坑道虫", "刺蛇巢",
+    "蝎子巢", "巨型尖塔", "女王巢", "进化腔", "雷兽洞穴", "尖塔", "血池", "菌落",
+    "孢子菌落", "未使用的虫族单位 1", "地刺菌落", "带外壳的主宰", "主宰", "萃取房", "成熟蛹体", "脑虫",
+    "脑虫达格斯", "未使用的虫族单位 2", "星灵枢纽", "机械台", "水晶塔", "同化炉", "未使用的神族单位 1", "观测站",
+    "传送门", "未使用的神族单位 2", "光子炮", "亚顿之殿", "控制核心", "圣堂文库", "锻炉", "星门",
+    "静滞牢笼", "舰队航标", "仲裁者法庭", "机械支援站", "护盾充能站", "凯达林水晶簇", "神族神殿", "萨尔纳加神殿",
+    "水晶矿", "水晶矿（类型 2）", "水晶矿（类型 3）", "未使用的洞穴", "未使用的洞口", "未使用的酒馆", "未使用的采矿平台", "未使用的独立指挥中心",
+    "独立星港", "未使用的独立跃迁门", "未使用的遗迹", "未使用的凯达林水晶簇", "高能瓦斯泉", "跃迁门", "灵能干扰器", "未使用的虫族标记",
+    "未使用的人族标记", "未使用的神族标记", "虫族信标", "人族信标", "神族信标", "虫族旗帜信标", "人族旗帜信标", "神族旗帜信标",
+    "发电机", "主宰虫茧", "黑暗蜂群", "地板导弹陷阱", "地板舱门", "上层门", "右侧上层门", "地坑门",
+    "右侧地坑门", "地板炮塔陷阱", "墙壁导弹陷阱", "墙壁火焰陷阱", "右墙导弹陷阱", "右墙火焰陷阱", "出生点", "旗帜",
+    "幼小蛹体", "灵能发射器", "数据磁盘", "凯达林水晶", "水晶矿簇 1", "水晶矿簇 2", "神族瓦斯球 1", "神族瓦斯球 2",
+    "虫族瓦斯囊 1", "虫族瓦斯囊 2", "人族瓦斯罐 1", "人族瓦斯罐 2", "无",
+];
+const UPGRADETYPES_DISPLAY_NAMES = [
+    "人族步兵护甲", "人族地面载具装甲", "人族飞船装甲", "虫族地面甲壳", "虫族飞行甲壳", "神族地面护甲", "神族空中护甲", "人族步兵武器",
+    "人族地面载具武器", "人族飞船武器", "虫族近战攻击", "虫族远程攻击", "虫族空中攻击", "神族地面武器", "神族空中武器", "神族等离子护盾",
+    "U-238 穿甲弹", "离子推进器", "未知升级 18", "泰坦反应堆", "视觉植入体", "莫比乌斯反应堆", "阿波罗反应堆", "巨像反应堆",
+    "腹囊（领主运输）", "触角（领主视野）", "气动甲壳（领主移速）", "代谢加速（跳虫移速）", "肾上腺（跳虫攻速）", "肌肉强化（刺蛇移速）", "沟槽脊刺（刺蛇射程）", "配子减数分裂",
+    "超突触节点", "奇点充能（龙骑射程）", "腿部强化（狂热者移速）", "圣甲虫伤害", "金甲虫载弹量", "引力驱动（穿梭机移速）", "传感阵列（观察者视野）", "引力助推器（观察者移速）",
+    "凯达林护符", "顶端传感器", "引力推进器", "航母容量", "凯达林核心", "未知升级 45", "未知升级 46", "阿古斯宝石",
+    "未知升级 48", "阿古斯护符", "未知升级 50", "双蛇杖反应堆", "几丁质装甲", "合成代谢", "卡戎助推器",
+];
+const TECHTYPES_DISPLAY_NAMES = [
+    "兴奋剂", "锁定", "电磁脉冲", "蜘蛛雷", "雷达扫描", "坦克攻城模式", "防御矩阵", "辐射",
+    "大和炮", "隐形力场", "单兵隐形", "潜地", "感染", "孵化寄生虫", "黑暗蜂群", "瘟疫",
+    "吞噬", "诱捕", "寄生", "心灵风暴", "幻象", "召回", "静滞力场", "合成执政官",
+    "恢复", "干扰网", "未使用的科技 26", "精神控制", "合成黑暗执政官", "反馈", "致盲弹", "心灵漩涡",
+    "潜伏者变异", "未使用的科技 33", "治疗",
+];
 
 function sanitize_positive_integer(value, fallback) {
 	var parsed = parseInt(value, 10);
@@ -109,8 +153,8 @@ function base_export_settings() {
 		pollIntervalMs: sanitize_positive_integer(config.pollIntervalMs, 100),
 		extension: config.extension || 'webm',
 		mimeTypes: config.mimeTypes || ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'],
-		modalTitle: config.modalTitle || "Exporting video",
-		modalMessage: config.modalMessage || "Recording replay to WebM from the opening frame at maximum replay speed."
+		modalTitle: config.modalTitle || "正在导出视频",
+		modalMessage: config.modalMessage || "从录像起点以最高速度录制 WebM 视频。"
 	};
 }
 
@@ -163,9 +207,9 @@ function release_interrupted_slider_drag() {
 }
 
 function display_name_for_icon(category, id) {
-	if (category === 'unit') return UNITTYPES_DISPLAY_NAMES[id] || 'Unknown unit';
-	if (category === 'upgrade') return UPGRADETYPES_DISPLAY_NAMES[id] || 'Unknown upgrade';
-	if (category === 'tech') return TECHTYPES_DISPLAY_NAMES[id] || 'Unknown research';
+	if (category === 'unit') return UNITTYPES_DISPLAY_NAMES[id] || '未知单位';
+	if (category === 'upgrade') return UPGRADETYPES_DISPLAY_NAMES[id] || '未知升级';
+	if (category === 'tech') return TECHTYPES_DISPLAY_NAMES[id] || '未知研究';
 	return '';
 }
 
@@ -581,21 +625,21 @@ function create_info_chart_config() {
 	    data: {
 	        labels: [0],
 	        datasets: [{
-	            label: 'minerals 1',
+	            label: '晶矿 1',
 	            data: [50],
 	            pointRadius: 0,
 	            lineTension: 0,
 	            borderWidth: 1,
 	            borderColor: '#54b9b1'
 	        }, {
-	            label: 'gas 1',
+	            label: '气矿 1',
 	            data: [0],
 	            pointRadius: 0,
 	            lineTension: 0,
 	            borderWidth: 1,
 	            borderColor: '#6ed279'
 	        }, {
-	            label: 'workers 1',
+	            label: '工人 1',
 	            data: [0],
 	            pointRadius: 0,
 	            lineTension: 0,
@@ -603,7 +647,7 @@ function create_info_chart_config() {
 	            borderColor: '#e6fb73',
 	            hidden: true
 	        }, {
-	            label: 'army size 1',
+	            label: '军队 1',
 	            data: [0],
 	            pointRadius: 0,
 	            lineTension: 0,
@@ -611,7 +655,7 @@ function create_info_chart_config() {
 	            borderColor: '#b07042',
 	            hidden: true
 	        }, {
-	            label: 'minerals 2',
+	            label: '晶矿 2',
 	            data: [0],
 	            pointRadius: 0,
 	            lineTension: 0,
@@ -619,7 +663,7 @@ function create_info_chart_config() {
 	            borderWidth: 1,
 	            borderColor: '#54b9b1'
 	        }, {
-	            label: 'gas 2',
+	            label: '气矿 2',
 	            data: [0],
 	            pointRadius: 0,
 	            lineTension: 0,
@@ -627,7 +671,7 @@ function create_info_chart_config() {
 	            borderWidth: 1,
 	            borderColor: '#6ed279'
 	        }, {
-	            label: 'workers 2',
+	            label: '工人 2',
 	            data: [0],
 	            pointRadius: 0,
 	            lineTension: 0,
@@ -636,7 +680,7 @@ function create_info_chart_config() {
 	            borderColor: '#e6fb73',
 	            hidden: true
 	        }, {
-	            label: 'army size 2',
+	            label: '军队 2',
 	            data: [0],
 	            pointRadius: 0,
 	            lineTension: 0,
@@ -1518,7 +1562,7 @@ async function copy_replay_link_for_current_frame() {
 		document.body.removeChild(textarea);
 	}
 	if (copied && typeof show_viewport_alert === "function") {
-		show_viewport_alert('Link copied to clipboard', 5000);
+		show_viewport_alert('已复制链接', 5000);
 	}
 }
 
@@ -1557,12 +1601,12 @@ function revoke_pending_export_download() {
 
 function show_export_download_modal(url, filename) {
 	set_modal_presentation();
-	$('#rv_modal h3').text('Video export ready');
+	$('#rv_modal h3').text('视频导出完成');
 	var content = $('#rv_modal p');
 	content.empty();
-	content.append(document.createTextNode('If the browser did not save the file automatically, use this download button.'));
+	content.append(document.createTextNode('如果浏览器没有自动保存，请点击下方按钮下载。'));
 	content.append('<br><br>');
-	var manualLink = $('<a class="button success" id="rv-video-download">Download video</a>');
+	var manualLink = $('<a class="button success" id="rv-video-download">下载视频</a>');
 	manualLink.attr('href', url);
 	manualLink.attr('download', filename);
 	content.append(manualLink);
@@ -1626,7 +1670,7 @@ function start_video_export() {
 	var pollIntervalMs = config.pollIntervalMs;
 	var videoBitsPerSecond = Math.round(config.videoBitrateMbps * 1000000);
 	if (typeof MediaRecorder === "undefined" || !Module.canvas || typeof Module.canvas.captureStream !== "function") {
-		print_to_modal("Video export unavailable", "This browser does not support canvas recording.");
+		print_to_modal("无法导出视频", "当前浏览器不支持画布录制。");
 		return;
 	}
 
@@ -1635,7 +1679,7 @@ function start_video_export() {
 		if (typeof resize_canvas === "function") {
 			if (!resize_canvas(Module.canvas)) {
 				clear_export_render_size();
-				print_to_modal("Video export unavailable", "The selected render size is too large for the current browser memory budget.");
+				print_to_modal("无法导出视频", "所选分辨率超过当前浏览器的内存限制。");
 				return;
 			}
 		}
@@ -1665,7 +1709,7 @@ function start_video_export() {
 			}
 		}
 		set_export_button_state(false);
-		print_to_modal("Video export unavailable", "Failed to initialize the browser recorder.");
+		print_to_modal("无法导出视频", "无法初始化浏览器录制功能。");
 		return;
 	}
 
@@ -1686,7 +1730,7 @@ function start_video_export() {
 	recorder.onerror = function() {
 		if (!exportState) return;
 		restore_export_state(exportState.saved);
-		print_to_modal("Video export failed", "The browser recorder reported an error.");
+		print_to_modal("视频导出失败", "浏览器录制功能发生错误。");
 	};
 	recorder.onstop = function() {
 		if (!exportState) return;
@@ -1729,7 +1773,7 @@ function ensure_paused() {
 }
 
 function update_speed(speed) {
-	document.getElementById("rv-rc-speed").innerHTML = "speed: " + Number(speed).toFixed(2) + "x";
+	document.getElementById("rv-rc-speed").innerHTML = "倍速 " + Number(speed).toFixed(2) + "x";
 }
 
 function update_play_pause_button(state) {
@@ -2005,8 +2049,8 @@ function update_timer(frame) {
     	time = hours + ':' + time;
     }
 	var timerElement = document.getElementById("rv-rc-timer");
-	timerElement.innerHTML = "time: " + time;
-	timerElement.title = "Frame " + displayFrame;
+	timerElement.innerHTML = "时间 " + time;
+	timerElement.title = "第 " + displayFrame + " 帧";
 	timerElement.classList.toggle("scrub-preview", scrubPreviewFrame !== null);
 	
 	$("#goto-frame-value").val(displayFrame);

@@ -1,3 +1,5 @@
 docs/bw/
 *.[mM][pP][qQ]
 .local-server/
+/agent/
+/tools/replay-cli/__pycache__/

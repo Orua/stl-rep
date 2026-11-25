@@ -5,10 +5,10 @@ var remasteredTerrainPromise;
 var remasteredFactoryPromise;
 
 function replay_engine_format(bytes) {
-    if (bytes.length < 30) throw new Error("Replay file is too short");
+    if (bytes.length < 30) throw new Error("录像文件过短");
     var data = new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength);
     var magic = new DataView(data.buffer, data.byteOffset).getUint32(12, true);
-    if (magic !== 0x53526572 && magic !== 0x53526573) throw new Error("Not a StarCraft replay");
+    if (magic !== 0x53526572 && magic !== 0x53526573) throw new Error("无法识别为星际争霸录像");
     return magic === 0x53526573 || (data[28] === 0x78 && (data[28] * 256 + data[29]) % 31 === 0)
         ? "remastered" : "classic";
 }
@@ -20,7 +20,7 @@ function initialize_replay_engine(format, factory) {
             canvas: canvas,
             print: console.log,
             printErr: console.error,
-            setWindowTitle: function() { document.title = window.OPENBW_WINDOW_TITLE || "StarCraft Replay Viewer"; },
+            setWindowTitle: function() { document.title = window.OPENBW_WINDOW_TITLE || "STL 星际争霸录像播放器"; },
             locateFile: function(name) {
                 return "v1.4/" + (format === "remastered" ? "remastered/" : "") + name;
             },
@@ -45,7 +45,7 @@ function get_remastered_factory() {
             var script = document.createElement("script");
             script.src = "v1.4/remastered/openbw.js";
             script.onload = function() { resolve(createRemasteredReplayEngine); };
-            script.onerror = function() { reject(new Error("Could not load the Remastered engine")); };
+            script.onerror = function() { reject(new Error("无法加载重制版录像引擎")); };
             document.head.appendChild(script);
         }).catch(function(error) { remasteredFactoryPromise = null; throw error; });
     }
@@ -59,14 +59,17 @@ async function prepare_replay_engine(bytes) {
     var factory = createClassicReplayEngine;
     if (format === "remastered") {
         factory = await get_remastered_factory();
-        if (!remasteredTerrainPromise) {
+        if (!files[3] && resourceMode !== "online") {
+            throw new Error("缺少重制版录像用的 terrain.mpq。请刷新页面并在确认弹窗中选择在线加载，或连同本地游戏资源一起导入。");
+        }
+        if (!files[3] && !remasteredTerrainPromise) {
             remasteredTerrainPromise = fetch(C_MPQ_BASE_URL + "/remastered/terrain.mpq")
                 .then(function(response) {
-                    if (!response.ok) throw new Error("Could not load Remastered terrain: " + response.status);
+                    if (!response.ok) throw new Error("无法加载重制版地形资源。HTTP " + response.status);
                     return response.blob();
                 }).catch(function(error) { remasteredTerrainPromise = null; throw error; });
         }
-        files[3] = await remasteredTerrainPromise;
+        if (!files[3]) files[3] = await remasteredTerrainPromise;
     }
     var buffers = await Promise.all(files.slice(0, format === "remastered" ? 4 : 3)
         .map(function(file) { return file.arrayBuffer(); }));
@@ -113,9 +116,14 @@ function handle_replay_error(message) {
     var error = document.createElement("div");
     error.className = "replay-load-error";
     error.setAttribute("role", "alert");
-    if (message === "ComputerAI" || message === "AIPatrol") message = "Built-in AI is not supported.";
-    if (message === "disable thingy unit") message = "This custom map uses an unsupported trigger.";
-    error.textContent = "Could not play replay: " + message;
+    if (message === "ComputerAI" || message === "AIPatrol") message = "暂不支持内置电脑 AI。";
+    if (message === "disable thingy unit") message = "该自定义地图使用了暂不支持的触发器。";
+    var unsupportedTrigger = /^unknown trigger (action|condition) (\d+)$/i.exec(message);
+    if (unsupportedTrigger) {
+        var triggerPart = unsupportedTrigger[1].toLowerCase() === "action" ? "动作" : "条件";
+        message = "地图使用了当前引擎不支持的触发" + triggerPart + "（编号 " + unsupportedTrigger[2] + "）。";
+    }
+    error.textContent = "无法播放录像。" + message;
     dropzone.prepend(error);
     if (embeddedReplayConfig.enabled) abort_embedded_replay_load();
 }

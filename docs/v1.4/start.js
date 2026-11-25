@@ -142,19 +142,8 @@ jQuery(document).ready( function($) {
 		infoTab.style.display = "block";
 	}
 	
-	set_db_handle(function(event) {
-		  
-		db_handle = event.target.result;
-		db_handle.onerror = function(event) {
-			
-			  // Generic error handler for all errors targeted at this database's requests!
-			  console.log("Database error: " + event.target.errorCode);
-			};
-		
-		// the db_handle has successfully been obtained. Now attempt to load the MPQs.
-		load_mpq_from_db();	
-	});
-	
+	initialize_resource_consent();
+
 	initialize_canvas(canvas);
 	install_canvas_resize_watcher();
 	install_mobile_camera_controls(canvas);
@@ -173,9 +162,9 @@ jQuery(document).ready( function($) {
  * Sets up the initial canvas look.
  */
 function initialize_canvas(canvas) {
-	document.title = window.OPENBW_WINDOW_TITLE || "StarCraft Replay Viewer";
+	document.title = window.OPENBW_WINDOW_TITLE || "STL 星际争霸录像播放器";
 	Module.setWindowTitle = function() {
-		document.title = window.OPENBW_WINDOW_TITLE || "StarCraft Replay Viewer";
+		document.title = window.OPENBW_WINDOW_TITLE || "STL 星际争霸录像播放器";
 	};
 	
 	canvas.height = '300';
@@ -202,9 +191,18 @@ function set_pregame_dropzone_status(title, message) {
 			html: dropzone.innerHTML
 		};
 	}
-	dropzone.innerHTML =
-		(title ? '<div class="pregame-status-title">' + title + '</div>' : '') +
-		'<div class="pregame-status-message">' + message + '</div>';
+	dropzone.replaceChildren();
+    if (title) {
+        var heading = document.createElement("div");
+        heading.className = "pregame-status-title";
+        heading.textContent = title;
+        dropzone.appendChild(heading);
+    }
+    var status = document.createElement("div");
+    status.className = "pregame-status-message";
+    status.setAttribute("role", "status");
+    status.textContent = message;
+    dropzone.appendChild(status);
 	dropzone.classList.add('pregame-dropzone-status');
 }
 
@@ -233,7 +231,7 @@ function show_loading_replay_screen(url) {
 	}
 	$('body').addClass('pregame-active');
 	if (notes) notes.style.display = 'none';
-	set_pregame_dropzone_status("Loading replay", url);
+	set_pregame_dropzone_status("正在加载录像", url);
 }
 
 function show_loading_files_screen(message) {
@@ -245,7 +243,7 @@ function show_loading_files_screen(message) {
 	}
 	$('body').addClass('pregame-active');
 	if (notes) notes.style.display = 'none';
-	set_pregame_dropzone_status("Loading files", message);
+	set_pregame_dropzone_status("正在加载游戏资源", message);
 }
 
 function reset_loading_files_screen() {
@@ -257,17 +255,21 @@ function update_mpq_loading_status(extraLine) {
 	if (extraLine) {
 		mpq_status_lines.push(extraLine);
 	}
-	show_loading_files_screen(mpq_status_lines.join('<br>') || 'Preparing bundled files...');
+	show_loading_files_screen(mpq_status_lines.join('\n') || '正在准备游戏资源…');
 }
 
 function schedule_mpq_retry() {
-	if (mpq_retry_timer) return;
+    if (resourceMode !== "online" || mpq_retry_timer) return;
+    if (mpq_retry_attempt >= 2) {
+        resource_load_failed("在线资源加载失败。可以重试，也可以导入本地 MPQ 文件。");
+        return;
+    }
 	var delayMs = 5000;
 	mpq_retry_timer = setTimeout(function() {
 		mpq_retry_timer = null;
 		fetch_default_mpqs();
 	}, delayMs);
-	update_mpq_loading_status("Retrying bundled files in " + (delayMs / 1000) + "s...");
+	update_mpq_loading_status("在线资源加载失败，" + (delayMs / 1000) + " 秒后重试…");
 }
 
 function shuffle_array(values) {
@@ -845,7 +847,7 @@ function update_replay_playlist_controls() {
 	var hasPlaylist = replayPlaylist.length > 1 && replayPlaylistIndex >= 0 && isReplayVisible;
 	controls.css('display', hasPlaylist ? 'flex' : 'none');
 	if (!hasPlaylist) return;
-	$('#playlist-position').text('#' + (replayPlaylistIndex + 1) + ' of ' + replayPlaylist.length);
+	$('#playlist-position').text('#' + (replayPlaylistIndex + 1) + ' / ' + replayPlaylist.length);
 	$('#playlist-name').text(replayPlaylist[replayPlaylistIndex].displayName);
 	$('#playlist-prev').prop('disabled', replayPlaylist.length <= 1);
 	$('#playlist-next').prop('disabled', replayPlaylist.length <= 1);
@@ -932,7 +934,7 @@ function embedded_replay_matches(entry, bots, maps) {
 function fetch_embedded_replay_candidates() {
 	return fetch(C_BASIL_DATA_BASE_URL + "stats/games_24h.json")
 		.then(function(response) {
-			if (!response.ok) throw new Error("Failed to fetch BASIL replay list");
+			if (!response.ok) throw new Error("获取 BASIL 录像列表失败");
 			return response.json();
 		})
 		.then(function(payload) {
@@ -971,13 +973,13 @@ function load_next_embedded_replay() {
 	if (!embeddedReplayConfig.enabled || embeddedReplayState.fetchInProgress || embeddedReplayState.loadingReplay) return;
 	embeddedReplayState.fetchInProgress = true;
 	begin_embedded_replay_load(null);
-	show_embedded_home_message("Loading replay list", "Fetching recent BASIL replays...");
+	show_embedded_home_message("正在读取录像列表", "正在读取最近的 BASIL 录像…");
 	fetch_embedded_replay_candidates()
 		.then(function(candidates) {
 			embeddedReplayState.fetchInProgress = false;
 			if (!candidates.length) {
 				abort_embedded_replay_load();
-				show_embedded_home_message("Replay stream unavailable", "No replays available");
+				show_embedded_home_message("录像轮播不可用", "暂无可用录像");
 				schedule_embedded_retry();
 				return;
 			}
@@ -994,7 +996,7 @@ function load_next_embedded_replay() {
 		.catch(function(error) {
 			embeddedReplayState.fetchInProgress = false;
 			abort_embedded_replay_load();
-			show_embedded_home_message("Replay stream unavailable", error && error.message ? error.message : "Failed to load replay list");
+			show_embedded_home_message("录像轮播不可用", error && error.message ? error.message : "读取录像列表失败");
 			schedule_embedded_retry();
 		});
 }
@@ -1015,6 +1017,7 @@ function set_replay_playlist(entries, activeIndex) {
 
 function read_replay_entry(entry, canvas) {
 	if (!entry || !entry.file) return;
+	if (!resourceMode) show_resource_consent();
 	currentReplaySourceUrl = null;
 	Module.print("loading replay from file " + entry.label);
 	var reader = new FileReader();
@@ -1337,7 +1340,7 @@ function js_fatal_error(ptr) {
 	
     var str = UTF8ToString(ptr);
 
-    print_to_modal("Fatal error", str);
+    print_to_modal("播放器发生错误", str);
 }
 
 function print_to_canvas(text, posx, posy, canvas) {
@@ -1373,7 +1376,7 @@ function set_modal_presentation(options) {
 
 function print_to_modal(title, text, options) {
 	set_modal_presentation(options);
-	var showSpinner = title === "Loading files";
+	var showSpinner = title === "正在加载游戏资源";
 	$('#rv_modal h3').html((showSpinner ? '<span class="loading-spinner" aria-hidden="true"></span>' : '') + title);
 	$('#rv_modal p').html(text);
 	
@@ -1394,7 +1397,7 @@ function has_all_files() {
 }
 
 function allocate_replay_buffer(arr) {
-	if (!Module.HEAPU8) throw new Error("OpenBW heap is not initialized");
+	if (!Module.HEAPU8) throw new Error("OpenBW 引擎尚未初始化");
 	var buf = _malloc(arr.length);
 	Module.HEAPU8.set(arr, buf);
 	return buf;
@@ -1508,14 +1511,14 @@ function update_viewport_alert(state) {
 		viewportAlertState.lastNuclearLaunchAlertCount = nuclearLaunchAlertCount;
 	}
 	if (state.isCatchingUp) {
-		var fastForwardText = 'Fast-forwarding to ' + format_frame_time(state.targetFrame);
+		var fastForwardText = '正在快进至 ' + format_frame_time(state.targetFrame);
 		alert.text(fastForwardText).addClass('is-visible');
 		position_viewport_alert();
 		return;
 	}
 	if (viewportAlertState.pendingNuclearLaunch) {
 		viewportAlertState.pendingNuclearLaunch = false;
-		show_viewport_alert('Nuclear launch detected.', 4500);
+		show_viewport_alert('侦测到核弹发射。', 4500);
 	}
 	if (viewportAlertState.hideAt && Date.now() >= viewportAlertState.hideAt) {
 		viewportAlertState.hideAt = 0;
@@ -1531,6 +1534,88 @@ function update_viewport_alert(state) {
 /*****************************
  * Database Functions
  *****************************/
+
+var resourceMode = null;
+
+function show_resource_consent(error) {
+    var dialog = document.getElementById("resource-consent");
+    var status = document.getElementById("resource-error");
+    status.textContent = error || "";
+    status.hidden = !error;
+    if (!dialog.open) dialog.showModal();
+}
+
+function initialize_resource_consent() {
+    var dialog = document.getElementById("resource-consent");
+    var localInput = document.getElementById("local-game-mpqs");
+    document.getElementById("resource-source").textContent = C_MPQ_BASE_URL;
+    document.getElementById("open-resource-consent").addEventListener("click", function() {
+        if (!resourceMode) show_resource_consent();
+    });
+    document.getElementById("cancel-resource-consent").addEventListener("click", function() {
+        dialog.close();
+    });
+    document.getElementById("select-local-game-resources").addEventListener("click", function() {
+        localInput.click();
+    });
+    localInput.addEventListener("change", async function() {
+        var selected = Array.from(localInput.files);
+        localInput.value = "";
+        if (resourceMode || !selected.length) return;
+        var byName = new Map(selected.map(function(file) { return [file.name.toLowerCase(), file]; }));
+        var required = C_MPQ_FILENAMES.map(function(name) { return byName.get(name.toLowerCase()); });
+        if (required.some(function(file) { return !file; })) {
+            show_resource_consent("请一次选齐 StarDat.mpq、BrooDat.mpq 和 Patch_rt.mpq。");
+            return;
+        }
+        var terrain = byName.get("terrain.mpq");
+        var archives = terrain ? required.concat(terrain) : required;
+        try {
+            for (var file of archives) {
+                var header = new Uint8Array(await file.slice(0, 4).arrayBuffer());
+                if (header[0] !== 77 || header[1] !== 80 || header[2] !== 81 || header[3] !== 26) {
+                    throw new Error(file.name + " 的文件头无效，请选择正确的 MPQ 文件。");
+                }
+            }
+        } catch (error) {
+            if (dialog.open && !resourceMode) show_resource_consent(error.message);
+            return;
+        }
+        if (resourceMode || !dialog.open) return;
+        resourceMode = "local";
+        files = archives;
+        hide_resource_prompt();
+        dialog.close();
+        show_loading_files_screen("正在读取本地游戏资源…");
+        parse_mpq_files();
+    });
+    document.getElementById("confirm-online-game-resources").addEventListener("click", function() {
+        if (resourceMode) return;
+        resourceMode = "online";
+        mpq_retry_attempt = 0;
+        hide_resource_prompt();
+        dialog.close();
+        set_db_handle(function(event) {
+            db_handle = event.target.result;
+            load_mpq_from_db();
+        });
+    });
+    reveal_pregame_homepage();
+    show_resource_consent();
+}
+
+function hide_resource_prompt() {
+    var trigger = document.getElementById("open-resource-consent");
+    trigger.closest("li").hidden = true;
+}
+
+function resource_load_failed(message) {
+    files = [];
+    resourceMode = null;
+    reset_pregame_dropzone();
+    document.getElementById("open-resource-consent").closest("li").hidden = false;
+    show_resource_consent(message);
+}
 
 function set_db_handle(success_callback) {
 
@@ -1574,7 +1659,7 @@ function get_blob(store, key, file_index, callback) {
 
 		files[file_index] = request.result.blob;
 		console.log("read " + request.result.mpqkp + "; size: " + request.result.blob.length + ": success.");
-		update_mpq_loading_status(key + ": cached.");
+		update_mpq_loading_status(key + " 已从缓存读取。");
 		callback(file_index, true);
 	};
 }
@@ -1616,7 +1701,7 @@ function load_mpq_from_db() {
 	var transaction = db_handle.transaction(["mpqs"]);
 	var objectStore = transaction.objectStore("mpqs");
 	console.log("attempting to retrieve files from db...");
-	mpq_status_lines = ["Checking cached files..."];
+	mpq_status_lines = ["正在检查浏览器缓存…"];
 	show_loading_files_screen(mpq_status_lines[0]);
 	
 	var completed = 0;
@@ -1640,15 +1725,15 @@ function load_mpq_from_db() {
 }
 
 function fetch_default_mpqs() {
-	if (is_fetching_default_mpqs || has_all_files()) return;
+	if (resourceMode !== "online" || is_fetching_default_mpqs || has_all_files()) return;
 	is_fetching_default_mpqs = true;
 	if (mpq_retry_timer) {
 		clearTimeout(mpq_retry_timer);
 		mpq_retry_timer = null;
 	}
 	mpq_retry_attempt += 1;
-	mpq_status_lines = ["Downloading bundled files...", "Attempt " + mpq_retry_attempt + "."];
-	show_loading_files_screen(mpq_status_lines.join('<br>'));
+	mpq_status_lines = ["正在下载游戏资源…", "第 " + mpq_retry_attempt + " 次下载"];
+	show_loading_files_screen(mpq_status_lines.join('\n'));
 
 	var loaded = 0;
 	var failed = false;
@@ -1672,24 +1757,22 @@ function fetch_default_mpqs() {
 	for (var i = 0; i < C_MPQ_FILENAMES.length; ++i) {
 		(function(index) {
 			var req = new XMLHttpRequest();
-			req.onreadystatechange = function() {
-				if (req.readyState !== XMLHttpRequest.DONE) return;
-
-				if (req.status === 200) {
-					files[index] = new File([req.response], C_MPQ_FILENAMES[index]);
-					update_mpq_loading_status(C_MPQ_FILENAMES[index] + ": success.");
-				} else {
-					failed = true;
-					console.log("Failed to fetch bundled MPQ " + C_DEFAULT_MPQ_SOURCES[index] + ": " + req.status);
-					update_mpq_loading_status(C_MPQ_FILENAMES[index] + ": failed (" + req.status + ").");
-				}
-				on_complete();
-			};
-			req.onerror = function() {
-				failed = true;
-				update_mpq_loading_status(C_MPQ_FILENAMES[index] + ": failed (network error).");
-				on_complete();
-			};
+            req.onload = function() {
+                if (req.status === 200 && req.response && req.response.byteLength) {
+                    files[index] = new File([req.response], C_MPQ_FILENAMES[index]);
+                    update_mpq_loading_status(C_MPQ_FILENAMES[index] + " 已下载。");
+                } else {
+                    failed = true;
+                    update_mpq_loading_status(C_MPQ_FILENAMES[index] + " 下载失败（HTTP " + req.status + "）。");
+                }
+                on_complete();
+            };
+            req.onerror = req.ontimeout = function() {
+                failed = true;
+                update_mpq_loading_status(C_MPQ_FILENAMES[index] + " 下载失败，请检查网络。");
+                on_complete();
+            };
+            req.timeout = 60000;
 			req.responseType = "arraybuffer";
 			req.open("GET", C_DEFAULT_MPQ_SOURCES[index], true);
 			req.send();
@@ -1718,7 +1801,7 @@ function load_replay_url(url) {
 	        	if (embeddedReplayConfig.enabled) {
 	        		abort_embedded_replay_load();
 	        	}
-	        	set_pregame_dropzone_status("Loading replay", "fetching " + url + ": " + req.statusText);
+			set_pregame_dropzone_status("正在加载录像", "获取 " + url + ": " + req.statusText);
 	        }
 	    }
     req.responseType = "arraybuffer";
@@ -1732,7 +1815,7 @@ function load_desktop_replay_path(path) {
 	show_loading_replay_screen(path);
 
 	if (typeof Neutralino === "undefined" || !Neutralino.filesystem) {
-		set_pregame_dropzone_status("Loading replay", "Desktop filesystem access is unavailable.");
+		set_pregame_dropzone_status("正在加载录像", "无法访问桌面文件系统。");
 		return;
 	}
 
@@ -1745,7 +1828,7 @@ function load_desktop_replay_path(path) {
 		})
 		.catch(function(error) {
 			var message = error && error.message ? error.message : String(error);
-			set_pregame_dropzone_status("Loading replay", "reading " + path + ": " + message);
+			set_pregame_dropzone_status("正在加载录像", "读取 " + path + ": " + message);
 		});
 }
 
@@ -1871,6 +1954,7 @@ function start_replay(buffer, length) {
 }
 
 function on_read_all_done() {
+    reset_pregame_dropzone();
 	
 	// if a replay is specified, then run it. else do nothing
     
@@ -1921,9 +2005,13 @@ function parse_mpq_files() {
         var reader = new FileReader();
         (function() {
             var index = i;
-            reader.onloadend = function(e) {
-                if (!e.target.error && e.target.readyState != FileReader.DONE) throw "read failed with no error!?";
-                if (e.target.error) throw "read failed: " + e.target.error;
+            reader.onerror = function() {
+                if (!is_reading) return;
+                is_reading = false;
+                resource_load_failed("读取 " + C_MPQ_FILENAMES[index] + " 失败，请重新加载游戏资源。");
+            };
+            reader.onload = function(e) {
+                if (!is_reading) return;
                 js_read_buffers[index] = new Int8Array(e.target.result);
                 --reads_in_progress;
 
