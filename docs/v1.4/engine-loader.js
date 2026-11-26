@@ -22,8 +22,9 @@ function initialize_replay_engine(format, factory) {
             printErr: console.error,
             setWindowTitle: function() { document.title = window.OPENBW_WINDOW_TITLE || "STL 星际争霸录像播放器"; },
             locateFile: function(name) {
-                return "v1.4/" + (format === "remastered" ? "remastered/" : "") + name;
+                return "v1.4/" + (format === "remastered" ? "remastered/" : "") + name + "?ver=1.5.24";
             },
+            onReplayOperationWarning: show_replay_operation_warning,
             onAbort: function(reason) { reject(new Error(String(reason))); },
             onRuntimeInitialized: function() {
                 Module = this;
@@ -43,7 +44,7 @@ function get_remastered_factory() {
     if (!remasteredFactoryPromise) {
         remasteredFactoryPromise = new Promise(function(resolve, reject) {
             var script = document.createElement("script");
-            script.src = "v1.4/remastered/openbw.js";
+            script.src = "v1.4/remastered/openbw.js?ver=1.5.24";
             script.onload = function() { resolve(createRemasteredReplayEngine); };
             script.onerror = function() { reject(new Error("无法加载重制版录像引擎")); };
             document.head.appendChild(script);
@@ -96,6 +97,24 @@ function load_replay_bytes(bytes) {
     return replayLoadQueue;
 }
 
+function show_replay_operation_warning(frame) {
+    var dialog = document.getElementById("replay-operation-warning");
+    if (dialog.open) return;
+    document.getElementById("replay-operation-warning-time").textContent =
+        "异常时间 " + format_replay_time(frame);
+    dialog.returnValue = "exit";
+    dialog.showModal();
+}
+
+document.getElementById("replay-operation-warning").addEventListener("close", function() {
+    if (!main_has_been_called) return;
+    if (this.returnValue === "continue") {
+        _replay_set_value(1, 0);
+    } else {
+        handle_replay_error("");
+    }
+});
+
 function handle_replay_error(message) {
     if (main_has_been_called) {
         Module.set_volume(0);
@@ -113,6 +132,8 @@ function handle_replay_error(message) {
     var dropzone = document.querySelector(".pregame-dropzone");
     var previous = dropzone.querySelector(".replay-load-error");
     if (previous) previous.remove();
+    if (embeddedReplayConfig.enabled) abort_embedded_replay_load();
+    if (!message) return;
     var error = document.createElement("div");
     error.className = "replay-load-error";
     error.setAttribute("role", "alert");
@@ -125,7 +146,6 @@ function handle_replay_error(message) {
     }
     error.textContent = "无法播放录像。" + message;
     dropzone.prepend(error);
-    if (embeddedReplayConfig.enabled) abort_embedded_replay_load();
 }
 
 replayEngineReady = initialize_replay_engine("classic", createClassicReplayEngine);

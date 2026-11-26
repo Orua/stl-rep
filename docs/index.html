@@ -460,6 +460,15 @@
         <button id="confirm-online-game-resources" type="button" class="button success">确认在线加载</button>
       </div>
     </dialog>
+    <dialog id="replay-operation-warning" class="resource-consent" aria-labelledby="replay-operation-warning-title" aria-describedby="replay-operation-warning-message">
+      <h2 id="replay-operation-warning-title">检测到操作记录异常</h2>
+      <p id="replay-operation-warning-message">当前录像复现可能与真实比赛有差异。</p>
+      <p id="replay-operation-warning-time"></p>
+      <form method="dialog" class="resource-consent-actions">
+        <button type="submit" value="exit" class="button secondary" autofocus>退出</button>
+        <button type="submit" value="continue" class="button success">继续</button>
+      </form>
+    </dialog>
     <script type="text/javascript" src="foundation.js?ver=2.6.1"></script>
     <div class="reveal-overlay"><div class="reveal" id="quick_help" data-reveal="l2qsst-reveal" role="dialog" aria-hidden="true" data-yeti-box="quick_help" data-resize="quick_help">
       <button class="close-button" data-close="" aria-label="关闭" type="button"><br>
@@ -637,8 +646,8 @@
     }
     </script>
     <script type="text/javascript" src="v1.4/start.js?ver=1.4.0"></script>
-    <script type="text/javascript" src="v1.4/openbw.js"></script>
-    <script type="text/javascript" src="v1.4/engine-loader.js"></script>
+    <script type="text/javascript" src="v1.4/openbw.js?ver=1.5.24"></script>
+    <script type="text/javascript" src="v1.4/engine-loader.js?ver=1.5.24"></script>
     
     
     

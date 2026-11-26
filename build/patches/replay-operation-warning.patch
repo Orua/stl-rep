@@ -1,0 +1,151 @@
+--- a/engines/classic/actions.h
++++ b/engines/classic/actions.h
+@@ -994,6 +994,8 @@
+ 		return true;
+ 	}
+ 
++	virtual void on_missing_replay_selection(uint32_t id, bool wide) {}
++
+ 	template<typename reader_T>
+ 	bool read_action_select(int owner, reader_T&& r) {
+ 		size_t n = r.template get<uint8_t>();
+@@ -1001,7 +1003,9 @@
+ 		static_vector<unit_t*, 12> units;
+ 		for (size_t i = 0; i != n; ++i) {
+ 			auto uid = unit_id(r.template get<uint16_t>());
+-			units.push_back(get_unit(uid));
++			auto* unit = get_unit(uid);
++			if (!unit && uid.index()) on_missing_replay_selection(uid.raw_value, false);
++			units.push_back(unit);
+ 		}
+ 		return action_select(owner, units);
+ 	}
+@@ -1013,7 +1017,9 @@
+ 		static_vector<unit_t*, 12> units;
+ 		for (size_t i = 0; i != n; ++i) {
+ 			auto uid = unit_id(r.template get<uint16_t>());
+-			units.push_back(get_unit(uid));
++			auto* unit = get_unit(uid);
++			if (!unit && uid.index()) on_missing_replay_selection(uid.raw_value, false);
++			units.push_back(unit);
+ 		}
+ 		return action_shift_select(owner, units);
+ 	}
+--- a/engines/remastered/actions.h
++++ b/engines/remastered/actions.h
+@@ -994,6 +994,8 @@
+ 		return true;
+ 	}
+ 
++	virtual void on_missing_replay_selection(uint32_t id, bool wide) {}
++
+ 	template<typename id_T = uint16_t, typename reader_T>
+ 	bool read_action_select(int owner, reader_T&& r) {
+ 		size_t n = r.template get<uint8_t>();
+@@ -1001,7 +1003,9 @@
+ 		static_vector<unit_t*, 12> units;
+ 		for (size_t i = 0; i != n; ++i) {
+ 			auto uid = unit_id_t<id_T>(r.template get<id_T>());
+-			units.push_back(get_unit(uid));
++			auto* unit = get_unit(uid);
++			if (!unit && uid.index()) on_missing_replay_selection(uid.raw_value, sizeof(id_T) > 2);
++			units.push_back(unit);
+ 		}
+ 		return action_select(owner, units);
+ 	}
+@@ -1013,7 +1017,9 @@
+ 		static_vector<unit_t*, 12> units;
+ 		for (size_t i = 0; i != n; ++i) {
+ 			auto uid = unit_id_t<id_T>(r.template get<id_T>());
+-			units.push_back(get_unit(uid));
++			auto* unit = get_unit(uid);
++			if (!unit && uid.index()) on_missing_replay_selection(uid.raw_value, sizeof(id_T) > 2);
++			units.push_back(unit);
+ 		}
+ 		return action_shift_select(owner, units);
+ 	}
+--- a/ui/ui.h
++++ b/ui/ui.h
+@@ -889,6 +889,34 @@
+ 		load_data_file(images_tbl.data, "arr/images.tbl");
+ 
+ 		load_all_image_data(load_data_file);
++	}
++
++	struct recent_replay_death {
++		int frame;
++		uint32_t narrow_id;
++		uint32_t wide_id;
++	};
++	std::vector<recent_replay_death> recent_replay_deaths;
++	int replay_warning_frame = -1;
++
++	void on_unit_destroy(unit_t* unit) override {
++		if (replay_warning_frame >= 0) return;
++		while (!recent_replay_deaths.empty() &&
++		       st.current_frame - recent_replay_deaths.front().frame > 12) {
++			recent_replay_deaths.erase(recent_replay_deaths.begin());
++		}
++		recent_replay_deaths.push_back({st.current_frame, get_unit_id(unit).raw_value,
++		                               get_unit_id_32(unit).raw_value});
++	}
++
++	void on_missing_replay_selection(uint32_t id, bool wide) override {
++		if (replay_warning_frame >= 0) return;
++		for (const auto& death : recent_replay_deaths) {
++			const int elapsed = st.current_frame - death.frame;
++			if (elapsed >= 0 && elapsed <= 12 &&
++			    id == (wide ? death.wide_id : death.narrow_id)) return;
++		}
++		replay_warning_frame = st.current_frame;
+ 	}
+ 
+ 	virtual void on_action(int owner, int action) override {
+--- a/ui/gfxtest.cpp
++++ b/ui/gfxtest.cpp
+@@ -134,6 +134,8 @@
+ 	void reset() {
+ 		saved_states.clear();
+ 		ui.reset();
++		ui.replay_warning_frame = -1;
++		ui.recent_replay_deaths.clear();
+ 		playback_clock_initialized = false;
+ 		playback_step_accumulator = std::chrono::duration<double>::zero();
+ 		auto_observer_enabled = true;
+@@ -392,7 +394,19 @@
+ 					trim_saved_states();
+ 				}
+ 			}
++			const bool already_warned = ui.replay_warning_frame >= 0;
+ 			ui.replay_functions::next_frame();
++#ifdef EMSCRIPTEN
++			if (!already_warned && ui.replay_warning_frame >= 0) {
++				ui.is_paused = true;
++				ui.replay_frame = ui.st.current_frame;
++				EM_ASM({
++					if (typeof Module.onReplayOperationWarning === "function") {
++						Module.onReplayOperationWarning($0);
++					}
++				}, ui.replay_warning_frame);
++			}
++#endif
+ 			for (auto& v : ui.apm) v.update(ui.st.current_frame);
+ 		};
+ 
+@@ -410,6 +424,7 @@
+ 					}
+ 					auto& v = i->second;
+ 					if (ui.st.current_frame > ui.replay_frame || v->st.current_frame > ui.st.current_frame) {
++						ui.recent_replay_deaths.clear();
+ 						ui.st = copy_state(v->st);
+ 						ui.action_st = copy_state(v->action_st, v->st, ui.st);
+ 						ui.apm = v->apm;
+@@ -444,7 +459,7 @@
+ 					playback_step_accumulator += std::chrono::duration_cast<std::chrono::duration<double>>(elapsed);
+ 					for (size_t i = 0; playback_step_accumulator >= replay_frame_interval && i != 128; ++i) {
+ 						++fps_counter;
+-						if (!ui.is_done()) next();
++						if (!ui.is_done() && !ui.is_paused) next();
+ 						else break;
+ 						playback_step_accumulator -= replay_frame_interval;
+ 						if (i % 4 == 3 && clock.now() - now >= max_main_loop_work_time) break;
